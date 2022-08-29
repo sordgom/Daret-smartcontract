@@ -19,6 +19,9 @@ async function main() {
   await lock.deployed();
 
   console.log("Lock with 1 ETH deployed to:", lock.address);
+
+  const DaretVault = await hre.ethers.getContractFactory("DaretVault");
+  const daretVault = await DaretVault.deploy();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
