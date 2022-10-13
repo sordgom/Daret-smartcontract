@@ -1,37 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ParentVault.sol";
+// import "./ParentVault.sol";
 // Import this file to use console.log
 import "hardhat/console.sol";
 import "./TestToken.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract DaretVault {
+contract DaretVault is Ownable {
     using DecimalMath for uint256;
     using SafeCast for uint256;
 
-    event Rewarded(address indexed userAddress, uint256 amount);
+    event Reward(address indexed userAddress, uint256 amount);
+    event Paid(address indexed userAddress, uint256 recurrence);
 
     uint256 public recurrence = 30 days;
-    uint256 public amount = 0;
-    address[] public userList; //The order is the list order for now
-    uint256 public total = 0;
-    address payable public owner;
-    uint256 public balance = 0;
+    uint256 public iteration = 0 ;
+    uint256 public amount;
+    uint256 public total;
+    uint256 public balance;
+    uint public timeCreated;
     TestToken public token;
-    ParentVault vault;  
 
     address public USDCAddress = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
     USDCInterface USDC = USDCInterface(USDCAddress);
 
-    mapping(uint256 => User) users;
-    /**
-     * @dev User struct to keep track of users registered
-     */
-    struct User {
-        uint256 id;
-        address walletAddress;
-    }
+    mapping(uint256 => address) public users;
+    mapping(address => bool) public rewarded;
+    mapping(address => mapping(uint256 => bool)) public payments;
+
+    // ["0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db"]
 
     /**
      * @param _recurrence to determine the frequency of the payments(1 month by default)
@@ -41,24 +39,45 @@ contract DaretVault {
     constructor(
         uint256 _recurrence,
         uint256 _amount,
-        address _wallets,
+        address[] memory _wallets,
         address _tokenAddress
 
     ) {
+        //Fill the mappings with initial values
+        for(uint i = 0; i< _wallets.length; i++){
+            users[i] = _wallets[i];
+            rewarded[_wallets[i]] = false ;
+            for(uint j=0 ; j< _recurrence ; j++){
+                payments[_wallets[i]][j] = false;
+            }
+        }   
+
         recurrence = _recurrence;
         amount = _amount;
-        userList.push(_wallets);
-        total = _amount * userList.length;
+        timeCreated=block.timestamp;
+        total = _amount * _wallets.length;
         token = TestToken(_tokenAddress);
+        token.mint(address(this),1000000);
     }
 
-    function reward(address _wallet) public {
-        token.transfer(_wallet, total);
-        emit Rewarded(_wallet,total);
+    modifier isRewarded(address _address) {
+        require(!rewarded[_address], "Wallet is already rewarded");
+        _;
     }
-
+    
+    //Reward functionlity
+    function reward(uint256 id) public isRewarded(users[id]){
+        token.transfer(users[id],total);
+        emit Reward(users[id],total);
+        iteration++;
+    }
+    
+    //Users should be able to pay their contribution
     function pay() public {
-        token.transferFrom(msg.sender, address(this), amount);
+        //TODO
+        //User has to approve the first
+        token.transferFrom(msg.sender, address(this),amount);
+        payments[msg.sender][iteration] = true ; 
     }
 }
 interface USDCInterface {

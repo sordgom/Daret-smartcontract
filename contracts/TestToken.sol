@@ -11,7 +11,10 @@ contract TestToken is Ownable, ERC20 {
         ERC20("Test Token", "GDai")
     {
         
-            _mint(msg.sender, 500 ether);
+        _mint(msg.sender, 500 ether);
         
+    }
+    function mint(address _address, uint256 _amount) public{
+        _mint(_address, _amount);
     }
 }
