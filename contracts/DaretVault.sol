@@ -15,7 +15,7 @@ contract DaretVault is Ownable {
     event Paid(address indexed userAddress, uint256 recurrence);
 
     uint256 public recurrence = 30 days;
-    uint256 public iteration = 0 ;
+    uint256 public payment_iteration = 0 ;
     uint256 public amount;
     uint256 public total;
     uint256 public balance;
@@ -39,7 +39,7 @@ contract DaretVault is Ownable {
     constructor(
         uint256 _recurrence,
         uint256 _amount,
-        address[] memory _wallets,
+        address[] memory _wallets,  
         address _tokenAddress
 
     ) {
@@ -58,6 +58,7 @@ contract DaretVault is Ownable {
         total = _amount * _wallets.length;
         token = TestToken(_tokenAddress);
         token.mint(address(this),1000000);
+        balance = token.balanceOf(address(this));
     }
 
     modifier isRewarded(address _address) {
@@ -69,15 +70,15 @@ contract DaretVault is Ownable {
     function reward(uint256 id) public isRewarded(users[id]){
         token.transfer(users[id],total);
         emit Reward(users[id],total);
-        iteration++;
+        rewarded[users[id]]=true;
+        payment_iteration++;
     }
     
     //Users should be able to pay their contribution
     function pay() public {
-        //TODO
-        //User has to approve the first
         token.transferFrom(msg.sender, address(this),amount);
-        payments[msg.sender][iteration] = true ; 
+        emit Paid(msg.sender,payment_iteration);
+        payments[msg.sender][payment_iteration] = true ;
     }
 }
 interface USDCInterface {
