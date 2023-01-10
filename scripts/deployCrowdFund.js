@@ -7,17 +7,12 @@
 const hre = require("hardhat");
 
 async function main() {
-  const DaretVault = await hre.ethers.getContractFactory("DaretVault");
-  const daretVault = await DaretVault.deploy(
-    30,
-    100,
-    ["0xC6A3dd9e9D73Eb3e66669534Ed21ee169aEd7f14"],
-    "0x0AD4F5143c1e3Bd2749F246548547B7711d82382"
-  ); //Add args
+  const CrowdFund = await hre.ethers.getContractFactory("CrowdFund");
+  const crowdFund = await CrowdFund.deploy();
 
-  await daretVault.deployed();
+  await crowdFund.deployed();
 
-  console.log("Daret address: ", daretVault.address);
+  console.log("CF address: ", crowdFund.address);
 
 }
 

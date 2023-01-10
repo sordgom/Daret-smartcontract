@@ -8,7 +8,7 @@ import "hardhat/console.sol";
 
 contract TestToken is Ownable, ERC20 {
     constructor() public
-        ERC20("Test Token", "GDai")
+        ERC20("Daret Token", "DT")
     {
         
         _mint(msg.sender, 500 ether);

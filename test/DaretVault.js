@@ -1,6 +1,7 @@
 const {time, loadFixture} = require("@nomicfoundation/hardhat-network-helpers");
 const {anyValue} = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const {expect} = require("chai");
+const hre = require("hardhat");
 
 describe("DaretVault", function () {
     // We define a fixture to reuse the same setup in every test.
@@ -16,10 +17,18 @@ describe("DaretVault", function () {
         const TOKEN = await ethers.getContractFactory("TestToken");
         const token = await TOKEN.connect(owner).deploy(); // 500 ether prob
         await token.deployed();
-
         // Launch vault contract from owner address
         const Vault = await ethers.getContractFactory("DaretVault");
-        const vault = await Vault.connect(owner).deploy(recurrence, amount, otherAccount.address);
+        const vault = await Vault.connect(owner).deploy(
+            recurrence,
+            amount,
+            [
+                "0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+                "0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db"
+            ],
+            token.address,
+            {gasLimit: 30000000}
+        );
 
         // Transfer 100 ether to the vault
         await token.transfer(vault.address, 100000000000000000000n);
@@ -42,9 +51,9 @@ describe("DaretVault", function () {
             const {vault, token, owner} = await loadFixture(deployFixture);
             expect(await token.balanceOf(owner.address)).to.equal(390000000000000000000n);
         });
-        it("Vault address balance should be 100 eth", async function () {
+        it("Vault address balance should be 100eth+100000", async function () {
             const {vault, token} = await loadFixture(deployFixture);
-            expect(await token.balanceOf(vault.address)).to.equal(100000000000000000000n);
+            expect(await token.balanceOf(vault.address)).to.equal(100000000000001000000n);
         });
         it("OtherAccount address balance should be 10 eth", async function () {
             const {token, otherAccount} = await loadFixture(deployFixture);
@@ -64,7 +73,7 @@ describe("DaretVault", function () {
         });
         it("Should get the right wallet", async function () {
             const {vault, otherAccount} = await loadFixture(deployFixture);
-            expect(await vault.userList(0)).to.equal(otherAccount.address);
+            expect(await vault.users(0)).to.equal(otherAccount.address);
         });
         it("Should get the right total", async function () {
             const {vault, amount} = await loadFixture(deployFixture);
@@ -72,7 +81,7 @@ describe("DaretVault", function () {
         });
     });
 
-    describe("reward", function () {
+    describe("Reward", function () {
         it("Check if the user's balance raised after getting the reward", async function () {
             const {Vault, vault, token, owner, otherAccount, amount} = await loadFixture(deployFixture);
             await vault.connect(owner).reward(otherAccount.address);

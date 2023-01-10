@@ -1,4 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
+require('dotenv').config();
+require("@nomiclabs/hardhat-etherscan");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -20,9 +22,14 @@ module.exports = {
       allowUnlimitedContractSize: true
     },
     goerli: {
-      url: "",
-      accounts: []
+      url: `https://eth-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` || "",
+      accounts: [`0x${process.env.GOERLI_PRIVATE_KEY}`],
     }
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: process.env.ETHERSCAN_API
   }
 
 };
