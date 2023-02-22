@@ -21,7 +21,11 @@ Token:  0x0AD4F5143c1e3Bd2749F246548547B7711d82382
 Daret: 0x532A91b454Db256768973fFC7E5D9C90F79D469C 0x8AA4b634e8ec99b2B22587E1F09E8f2C3F7fAF06
 CF: 0x41c1241BeAf132A8f17621507F9222E782501B1C
 
+new Daret: 0xFCcEe2d147DCEDE35CbBA996B2250BDDCf925ba8
+
 # Daret contract explanation
+* constructor(address _tokenAddress): This function is used to initialize the Daret contract. It takes the address of the token contract as a parameter and sets the token address in the contract.(should have initial balance)
+  
 * startRound(): This function is used to start a new round of the ROSCA. It is only callable by the contract owner and can only be called in the 'Setup' state. It creates a new Round struct in the rounds mapping, sets the round number, contribution, and fee percentages, and sets the start and end times for the round.
 
 * joinRound(uint256 _roundNumber): This function is used by members to join a round of the ROSCA. It can only be called in the 'Open' state and adds the calling address to the members array for the specified round.

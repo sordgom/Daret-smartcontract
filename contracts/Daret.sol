@@ -1,114 +1,216 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract Daret is Ownable {
-    event Reward(address indexed userAddress, uint256 amount);
-    event Paid(address indexed userAddress, uint256 recurrence);
+contract Rosca is Ownable {
+    using SafeMath for uint256;
 
-    mapping(address => bool) public rewarded;
-    mapping(address => mapping(uint256 => bool)) public payments;
+    uint256 private constant MAX_MEMBERS = 50;
 
-    address public USDCAddress = 0x07865c6E87B9F70255377e024ace6630C1Eaa37F;
-    IERC20 public usdc = IERC20(USDCAddress);
+    uint256 public constant MIN_CONTRIBUTION = 1000000 wei;
 
-    uint256 public recurrence;
-    uint256 public paymentIteration;
-    uint256 public amount;
-    uint256 public total;
-    uint256 public balance;
-    uint256 public timeCreated;
-    address[] public wallets;
-    IERC20 public token;
+    uint256 public constant MAX_CONTRIBUTION = 10000000 wei;
 
-    /**
-     * @param _recurrence to determine the frequency of the payments (in seconds)
-     * @param _amount the amount the users have to pay on each contribution
-     * @param _wallets list of wallets involved
-     * @param _tokenAddress the address of the ERC20 token to use for payments
+    uint256 public constant MIN_ROUNDS = 2;
+
+    uint256 public constant MAX_ROUNDS = 50;
+
+    uint256 public constant FEE_PERCENTAGE = 1;
+
+    uint256 public constant SECONDS_IN_DAY = 86400;
+
+    uint256 public constant GRACE_PERIOD = 3 * SECONDS_IN_DAY; // 3 days
+
+    uint256 public constant MAX_ADMIN_FEE = 10;
+
+    uint256 public constant MAX_WINNER_FEE = 2;
+
+    enum State { Setup, Open, Closed, Completed }
+
+    struct Member {
+        uint256 contribution;
+        uint256 paidRounds;
+        bool paid;
+    }
+
+    struct Round {
+        uint256 roundNumber;
+        uint256 contribution;
+        uint256 adminFee;
+        uint256 winnerFee;
+        uint256 payout;
+        uint256 startTime;
+        uint256 gracePeriodEndTime;
+        uint256 endTime;
+        address[] members;
+        mapping(address => Member) memberInfo;
+        address winner;
+        bool paidOut;
+    }
+
+    mapping(uint256 => Round) public rounds;
+
+    uint256 public currentRound;
+
+    uint256 public maxRounds;
+
+    uint256 public maxMembers;
+
+    uint256 public currentFeePercentage;
+
+    uint256 public startTime;
+
+    address public feeAccount;
+
+    State public state;
+
+    event RoundStarted(uint256 roundNumber, uint256 startTime, uint256 endTime);
+
+    event MemberJoined(uint256 roundNumber, address member);
+
+    event ContributionAdded(uint256 roundNumber, address member, uint256 amount);
+
+    event RoundCompleted(uint256 roundNumber, address winner, uint256 payout);
+
+    event ContractClosed(uint256 time);
+
+    modifier onlyState(State _state) {
+        require(state == _state, "Invalid state");
+        _;
+    }
+
+     /**
+     * @param _maxRounds Rounds the contract will run for
+     * @param _maxMembers The number of members
+     * @param _feePercentage The percentage of the contribution that will be used for admin fees
+     * @param _feeAccount The account that will receive the admin fees
      */
     constructor(
-        uint256 _recurrence,
-        uint256 _amount,
-        address[] memory _wallets,
-        address _tokenAddress
-    ) {
-        require(_wallets.length > 0, "DaretVault: wallets list is empty");
-        require(_amount > 0, "DaretVault: amount is zero");
-        require(
-            _recurrence > 0,
-            "DaretVault: recurrence interval is zero"
-        );
-        require(
-            _tokenAddress != address(0),
-            "DaretVault: invalid token address"
-        );
+        uint256 _maxRounds,
+        uint256 _maxMembers,
+        uint256 _feePercentage,
+        address _feeAccount
+    ) payable{
+        require(_maxRounds >= MIN_ROUNDS && _maxRounds <= MAX_ROUNDS, "Invalid number of rounds");
+        require(_maxMembers > 1 && _maxMembers <= MAX_MEMBERS, "Invalid number of members");
+        require(_feePercentage <= MAX_ADMIN_FEE, "Invalid fee percentage");
+        require(_feeAccount != address(0), "Invalid fee account");
 
-        recurrence = _recurrence;
-        amount = _amount;
-        timeCreated = block.timestamp;
-        token = IERC20(_tokenAddress);
+        maxRounds = _maxRounds;
+        maxMembers = _maxMembers;
+        currentFeePercentage = _feePercentage;
+        feeAccount = _feeAccount;
 
-        // Fill the mappings with initial values
-        for (uint256 i = 0; i < _wallets.length; i++) {
-            wallets.push(_wallets[i]);
-            rewarded[_wallets[i]] = false;
-            for (uint256 j = 0; j < _recurrence; j++) {
-                payments[_wallets[i]][j] = false;
-            }
+        state = State.Setup;
+    }
+    
+     //The Reason I have private and public is startRound() is only called by the owner and _startRound() is called by startRound() and completeRound()
+     function _startRound()  private{
+        currentRound++;
+
+        require(currentRound <= maxRounds, "Maximum rounds reached");
+
+        Round storage round = rounds[currentRound];
+        round.roundNumber = currentRound;
+        round.contribution = MIN_CONTRIBUTION;
+        round.adminFee = currentFeePercentage;
+        round.winnerFee = MAX_WINNER_FEE;
+        round.startTime = block.timestamp;
+        round.gracePeriodEndTime = round.startTime + GRACE_PERIOD;
+        round.endTime = round.startTime + GRACE_PERIOD.mul(maxMembers);
+        //payout = contribution * maxmembers * (100 - adminFee - winnerFee) / 100
+        round.payout = (round.contribution.mul(maxMembers).mul(100 - round.adminFee - round.winnerFee)).div(100); 
+        round.winner = address(0);
+        round.paidOut = false;
+
+        state = State.Open;
+
+        emit RoundStarted(currentRound, round.startTime, round.endTime);
+    }
+
+    function startRound() external onlyOwner onlyState(State.Setup){
+        _startRound();
+    }
+
+    function joinRound() external payable onlyState(State.Open) {
+        require(msg.value == MIN_CONTRIBUTION, "Invalid contribution amount");
+        require(rounds[currentRound].memberInfo[msg.sender].contribution == 0, "You have already joined this round");
+        require(rounds[currentRound].members.length < maxMembers, "Maximum number of members reached");
+
+        Round storage round = rounds[currentRound];
+        round.memberInfo[msg.sender].contribution = msg.value;
+        round.memberInfo[msg.sender].paidRounds = 0;
+        round.memberInfo[msg.sender].paid = false;
+        round.members.push(msg.sender);
+
+        emit MemberJoined(currentRound, msg.sender);
+
+        if (round.members.length == maxMembers) {
+            state = State.Closed;
+            round.endTime = block.timestamp;
+        }
+    }
+
+    function addContribution() external payable onlyState(State.Open) {
+        require(msg.value == MIN_CONTRIBUTION, "Invalid contribution amount");
+        require(rounds[currentRound].memberInfo[msg.sender].contribution > 0, "You have not joined this round");
+
+        rounds[currentRound].memberInfo[msg.sender].contribution = rounds[currentRound].memberInfo[msg.sender].contribution.add(msg.value);
+
+        emit ContributionAdded(currentRound, msg.sender, msg.value);
+    }
+
+    function completeRound(address payable winner) external onlyOwner onlyState(State.Closed) {
+        Round storage round = rounds[currentRound];
+        require(round.winner == address(0), "Round already completed");
+        
+        uint totalContribution = 0;
+        for (uint i = 0; i < round.members.length; i++) {
+            totalContribution = totalContribution.add(round.memberInfo[round.members[i]].contribution);
+        }
+        require(totalContribution >= round.payout, "Not enough contributions");
+
+        round.winner = winner;
+        round.paidOut = true;
+
+        
+      // Calculate payout and fees
+        uint256 winnerPayout = round.payout.sub(round.contribution.mul(round.winnerFee).div(100));
+        uint256 totalAdminFee = round.contribution.mul(round.adminFee).div(100);
+
+        // Check contract balance
+        require(address(this).balance >= winnerPayout.add(totalAdminFee), "Insufficient contract balance");
+
+        // Transfer funds to winner and owner
+        winner.transfer(winnerPayout);
+        payable(feeAccount).transfer(totalAdminFee);
+
+        if (currentFeePercentage < MAX_ADMIN_FEE) {
+            currentFeePercentage++;
         }
 
-        total = _amount * wallets.length;
-        require(
-            token.balanceOf(address(this)) >= total,
-            "DaretVault: insufficient token balance"
-        );
-    }
-
-    function getWallets() external view returns (address[] memory) {
-        return wallets;
-    }
-
-    modifier isRewarded(address _address) {
-        require(!rewarded[_address], "DaretVault: wallet is already rewarded");
-        _;
-    }
-
-    modifier hasToPay(address _address, uint256 _iteration) {
-        require(
-            !payments[_address][_iteration],
-            "DaretVault: wallet already paid"
-        );
-        _;
-    }
-
-    // Reward functionlity
-    function reward() external isRewarded(msg.sender) {
-        token.transfer(msg.sender, total);
-        emit Reward(msg.sender, total);
-        rewarded[msg.sender] = true;
-        paymentIteration++;
-        balance -= total;
-    }
-
-    // Users should be able to pay their contribution
-    function pay() public hasToPay(msg.sender, paymentIteration) {
-        require(token.balanceOf(msg.sender) >= amount, "Insufficient balance");
-        require(token.allowance(msg.sender, address(this)) >= amount, "Insufficient allowance");
-        require(token.transferFrom(msg.sender, address(this), amount), "Token transfer failed");
-        emit Paid(msg.sender, paymentIteration);
-        payments[msg.sender][paymentIteration] = true;
-        balance += amount;
-    }
-
-    // Self destruct function after all the users have been paid
-    function endDaret() public onlyOwner {
-        for (uint256 i = 0; i < wallets.length; i++) {
-            require(rewarded[wallets[i]], "The contract is not over yet");
+        if (currentRound == maxRounds) {
+            state = State.Completed;
+            emit ContractClosed(block.timestamp);
+        } else {
+            _startRound();
         }
-        selfdestruct(payable(owner()));
+
+        emit RoundCompleted(currentRound, winner, round.payout);
+    }
+
+    function closeContract() external onlyOwner onlyState(State.Open) {
+        require(currentRound > 0, "No rounds started");
+
+        // Close current round if it is still open
+        if (rounds[currentRound].endTime > 0 && rounds[currentRound].endTime > block.timestamp) {
+            rounds[currentRound].endTime = block.timestamp;
+        }
+
+        state = State.Closed;
+
+        emit ContractClosed(block.timestamp);
     }
 }
