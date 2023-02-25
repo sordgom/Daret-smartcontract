@@ -21,8 +21,12 @@ module.exports = {
       chainId: 1337,
       allowUnlimitedContractSize: true
     },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.ALCHEMY_API_KEY}` || "",
+      accounts: [`0x${process.env.GOERLI_PRIVATE_KEY}`],
+    },
     goerli: {
-      url: `https://eth-goerli.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` || "",
+      url: `https://goerli.infura.io/v3/${process.env.ALCHEMY_API_KEY}` || "",
       accounts: [`0x${process.env.GOERLI_PRIVATE_KEY}`],
     }
   },

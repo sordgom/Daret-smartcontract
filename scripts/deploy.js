@@ -7,13 +7,13 @@
 const hre = require("hardhat");
 
 async function main() {
-  const DaretVault = await hre.ethers.getContractFactory("DaretVault");
+  const DaretVault = await hre.ethers.getContractFactory("Rosca");
   const daretVault = await DaretVault.deploy(
-    30,
-    100,
-    ["0xC6A3dd9e9D73Eb3e66669534Ed21ee169aEd7f14"],
-    "0x0AD4F5143c1e3Bd2749F246548547B7711d82382"
-  ); //Add args
+    10, 
+    5,
+    2,
+    "0xC6A3dd9e9D73Eb3e66669534Ed21ee169aEd7f14"
+  ); 
 
   await daretVault.deployed();
 
