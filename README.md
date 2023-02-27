@@ -13,14 +13,14 @@ npx hardhat run scripts/deploy.js --network goerli
 npx hardhat run scripts/deployCrowdFund.js --network goerli
 npx hardhat verify --network goerli --constructor-args constructor-args.js 0x8AA4b634e8ec99b2B22587E1F09E8f2C3F7fAF06
 npx hardhat verify --network goerli 0x41c1241BeAf132A8f17621507F9222E782501B1C 0x0AD4F5143c1e3Bd2749F246548547B7711d82382 //sc address - token address
-
+ npx hardhat clean
 ```
 Deploying contracts with the account: 0xC6A3dd9e9D73Eb3e66669534Ed21ee169aEd7f14
 Account balance: 94269107244534903
 Token:  0x0AD4F5143c1e3Bd2749F246548547B7711d82382
 Daret: 0x532A91b454Db256768973fFC7E5D9C90F79D469C 0x8AA4b634e8ec99b2B22587E1F09E8f2C3F7fAF06
 CF
-    Goerli: 0x41c1241BeAf132A8f17621507F9222E782501B1C
+    Goerli: 0xfbF0141a558A310A434fEA9cf595789641bf530a
 
 Daret
     Goerli: 0x6557a4cF14Aa121e0b87FaA86945D2C01d770876 

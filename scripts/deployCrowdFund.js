@@ -8,12 +8,9 @@ const hre = require("hardhat");
 
 async function main() {
   const CrowdFund = await hre.ethers.getContractFactory("CrowdFund");
-  const crowdFund = await CrowdFund.deploy("0x0AD4F5143c1e3Bd2749F246548547B7711d82382");
-
+  const crowdFund = await CrowdFund.deploy();
   await crowdFund.deployed();
-
   console.log("CF address: ", crowdFund.address);
-
 }
 
 // We recommend this pattern to be able to use async/await everywhere
