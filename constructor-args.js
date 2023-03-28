@@ -1,6 +1,7 @@
 module.exports = [
-    10, 
+    5, 
     5,
     2,
-    "0xC6A3dd9e9D73Eb3e66669534Ed21ee169aEd7f14"
+    "0xa485A768CB6DE1DE1e0Fc5AB2b93703a11615c1A",
+    100
 ];
