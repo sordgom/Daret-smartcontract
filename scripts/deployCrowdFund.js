@@ -8,7 +8,11 @@ const hre = require("hardhat");
 
 async function main() {
   const CrowdFund = await hre.ethers.getContractFactory("CrowdFund");
-  const crowdFund = await CrowdFund.deploy();
+  const crowdFund = await CrowdFund.deploy(  
+    10,
+    1,
+    "0xa485A768CB6DE1DE1e0Fc5AB2b93703a11615c1A"
+    );
   await crowdFund.deployed();
   console.log("CF address: ", crowdFund.address);
 }

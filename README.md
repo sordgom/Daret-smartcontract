@@ -20,7 +20,7 @@ Account balance: 94269107244534903
 Token:  0x0AD4F5143c1e3Bd2749F246548547B7711d82382
 Daret: 0x532A91b454Db256768973fFC7E5D9C90F79D469C 0x8AA4b634e8ec99b2B22587E1F09E8f2C3F7fAF06
 CF
-    Goerli: 0xfbF0141a558A310A434fEA9cf595789641bf530a
+    Goerli: 0x821C4C66ad0C113cdEe0480dCb55AFFD4933D391
 
 Daret
     Goerli: 0x76D2426aF5E9A5228586f3e2740C915CdB417dF5 
@@ -38,13 +38,3 @@ Daret
 * completeRound(uint256 _roundNumber): This function is used to complete a round of the ROSCA. It can only be called by the contract owner and can only be called in the 'Open' state after the round has ended. It calculates the winner of the round and sets the winner address for the round. It also sets the payout amount for the round and updates the paidRounds count for each member who contributed to the round. Finally, it sets the state to 'Completed' and starts a new round with the startRound() function.
 
 * closeContract(): This function is used to close the ROSCA contract. It can only be called by the contract owner and can only be called in the 'Setup' or 'Open' states. If the contract is in the 'Open' state, it calculates the payout for the current round and sets the state to 'Closed'. If the contract is in the 'Setup' state, it simply sets the state to 'Closed'. Once the contract is closed, no further rounds can be started and no contributions can be added.
-
-# Test steps:
-* deploy contract
-* Set the parameters for the contract, such as the maximum number of rounds, the maximum number of members, and the fee percentage.
-* Start a new round by calling the `startRound()` function.
-* Add members to the round by calling the `joinRound()` function with the appropriate amount of ether for each member.
-* Once all members have joined, the owner of the contract can call the `completeRound()` function to close the round and determine the winner.
-* The winner can then call the `withdraw()` function to receive their payout.
-* Repeat steps 3-6 for the desired number of rounds.
-* Once all rounds have been completed, the owner can call the `closeContract` function to close the contract and withdraw any remaining funds.
