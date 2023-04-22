@@ -7,15 +7,15 @@
     contract Rosca is Ownable {
         using SafeMath for uint256;
 
-        uint256 private constant MAX_MEMBERS = 50;
+        uint256 private constant MAX_MEMBERS = 1000;
 
         uint256 public constant MIN_CONTRIBUTION = 1 wei;
 
         uint256 public constant MAX_CONTRIBUTION = 1 ether;
 
-        uint256 public constant MIN_ROUNDS = 2;
+        uint256 public constant MIN_ROUNDS = 1;
 
-        uint256 public constant MAX_ROUNDS = 50;
+        uint256 public constant MAX_ROUNDS = 10000;
 
         uint256 public constant FEE_PERCENTAGE = 1;
 
@@ -99,7 +99,6 @@
         ) payable {
             require(_maxRounds >= MIN_ROUNDS && _maxRounds <= MAX_ROUNDS, "Invalid number of rounds");
             require(_maxMembers > 1 && _maxMembers <= MAX_MEMBERS, "Invalid number of members");
-            require(_maxRounds <= _maxMembers, "Max rounds should be less than or equal to max members");
             require(_feePercentage <= MAX_ADMIN_FEE, "Invalid fee percentage");
             require(_feeAccount != address(0), "Invalid fee account");
             require(_contribution >= MIN_CONTRIBUTION && _contribution <= MAX_CONTRIBUTION, "Invalid contributio amount");

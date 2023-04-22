@@ -28,12 +28,18 @@ module.exports = {
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.ALCHEMY_API_KEY}` || "",
       accounts: [`0x${process.env.GOERLI_PRIVATE_KEY}`],
-    }
+    },
+    optimisticGoerli: {
+      url: "https://goerli.optimism.io",
+      accounts: [process.env.GOERLI_PRIVATE_KEY],
+      live: true,
+      saveDeployments: true,
+    },
   },
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: process.env.ETHERSCAN_API
+    apiKey: process.env.ETHERSCAN_API,
   }
 
 };
