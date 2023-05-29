@@ -1,36 +1,58 @@
-# Sample Hardhat Project
+# Daret Smart Contract Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project is a use case of the Hardhat development environment for Ethereum. It includes two contracts: Daret and CrowdFund, tests for these contracts, and scripts to deploy them.
+
+## Installation
+
+First, clone this repo and install its dependencies:
+
+```shell
+git clone
+cd daret
+npm install
+```
+
+## Usage
 
 Try running some of the following tasks:
+Replace variables '$network' and '$sc_address' with the network name and contract address respectively.
+create your own constructor-args.js file to verify your smart contract using the constructor arguments.
 
 ```shell
 npx hardhat help
 npx hardhat test
 GAS_REPORT=true npx hardhat test
 npx hardhat node
-npx hardhat run scripts/deploy.js --network goerli
-npx hardhat run scripts/deployCrowdFund.js --network goerli
-npx hardhat verify --network goerli --constructor-args constructor-args.js $address
-npx hardhat verify --network goerli $sc_address 
+npx hardhat run scripts/deploy.js --network $network
+npx hardhat run scripts/deployCrowdFund.js --network $network
+npx hardhat verify --network $network --constructor-args constructor-args.js $sc_address
+npx hardhat verify --network $network $sc_address 
 npx hardhat clean
 ```
 
-## Daret contract explanation
+## Contract Overview
 
-* constructor(address _tokenAddress): This function is used to initialize the Daret contract. It takes the address of the token contract as a parameter and sets the token address in the contract.(should have initial balance)
-  
-* startRound(): This function is used to start a new round of the ROSCA. It is only callable by the contract owner and can only be called in the 'Setup' state. It creates a new Round struct in the rounds mapping, sets the round number, contribution, and fee percentages, and sets the start and end times for the round.
+### Daret Contract
 
-* joinRound(uint256 _roundNumber): This function is used by members to join a round of the ROSCA. It can only be called in the 'Open' state and adds the calling address to the members array for the specified round.
+This contract is designed for ROSCA (Rotating Savings and Credit Association) operations. Key functions include:
 
-* addContribution(uint256 _roundNumber): This function is used by members to add their contribution to a round of the ROSCA. It can only be called in the 'Open' state and adds the calling address to the members array for the specified round.
+* constructor(address _tokenAddress): Initializes the Daret contract with the address of the token contract.
 
-* completeRound(uint256 _roundNumber): This function is used to complete a round of the ROSCA. It can only be called by the contract owner and can only be called in the 'Open' state after the round has ended. It calculates the winner of the round and sets the winner address for the round. It also sets the payout amount for the round and updates the paidRounds count for each member who contributed to the round. Finally, it sets the state to 'Completed' and starts a new round with the startRound() function.
+* startRound(): Starts a new round of the ROSCA.
 
-* closeContract(): This function is used to close the ROSCA contract. It can only be called by the contract owner and can only be called in the 'Setup' or 'Open' states. If the contract is in the 'Open' state, it calculates the payout for the current round and sets the state to 'Closed'. If the contract is in the 'Setup' state, it simply sets the state to 'Closed'. Once the contract is closed, no further rounds can be started and no contributions can be added.
+* joinRound(uint256 _roundNumber): Enables members to join a round of the ROSCA.
 
-## CrowdFund contract explanation
+* addContribution(uint256 _roundNumber): Allows members to add their contribution to a round of the ROSCA.
+
+* completeRound(uint256 _roundNumber): Completes a round of the ROSCA.
+
+* closeContract(): Closes the ROSCA contract.
+
+Please refer to the contract source code for detailed comments about the functions and their modifiers.
+
+### CrowdFund contract
+
+This contract provides functionality for crowdfunding operations. Key functions include:
 
 * constructor(uint256 _goal, uint32 _durationInDays, address _feeAccount): This function initializes the CrowdFund contract. It takes the goal amount to be raised, the duration of the campaign in days, and the address of the fee account as parameters. It sets the start and end times for the campaign, the goal amount, the creator address, and the fee account address.
 
@@ -43,3 +65,7 @@ npx hardhat clean
 * claim(): This function is used by the creator to claim the pledged amount once the campaign is successfully completed. It can only be called by the creator after the campaign has ended and the goal has been reached. It sets the claimed state to true, transfers the pledged amount to the creator, and emits the Claim event.
 
 * refund(): This function is used by users to request a refund of their pledged amount if the campaign is not successfully completed. It can only be called after the campaign has ended and the goal has not been reached. It transfers the pledged amount back to the caller and emits the Refund event.
+
+Refer to the contract source code for additional details and comments.
+
+Contributions and suggestions are welcome! Please open an issue or submit a pull request with any suggestions or enhancements

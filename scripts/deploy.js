@@ -7,21 +7,27 @@
 const hre = require("hardhat");
 
 async function main() {
-  const DaretVault = await hre.ethers.getContractFactory("Rosca");
-  const daretVault = await DaretVault.deploy(
-    5, 
-    5,
-    2,
-    "0xa485A768CB6DE1DE1e0Fc5AB2b93703a11615c1A",
-    100,
+  const Daret = await hre.ethers.getContractFactory("Rosca");
+  let _maxRounds = 3 ,
+   _maxMembers = 3, 
+   _feePercentage = 10, 
+   _feeAccount = "0x5FbDB2315678afecb367f032d93F642f64180aa3", 
+   _contribution = 1000000000000000000;
+
+  const daret = await Daret.deploy(
+    _maxRounds, 
+    _maxMembers,
+    _feePercentage,
+    _feeAccount,
+    _contribution,
     {
-      value: 100
+      value: _contribution
     }
   );
 
-  await daretVault.deployed();
+  await daret.deployed();
 
-  console.log("Daret address: ", daretVault.address);
+  console.log("Daret address: ", daret.address);
 
 }
 
